@@ -20,6 +20,8 @@ type Investment struct {
 	ReferenceRate  float64 // Taux de référence annuel (%)
 	NAVHistory     []NAV   // Historique des NAV
 	InvestmentDate string  // Date d'investissement initial
+	Quantity       float64 // Quantité d'actions (si défini)
+	UnitPrice      float64 // Prix unitaire de l'action (si défini)
 }
 
 // Portfolio représente un portefeuille d'investissements
@@ -34,7 +36,7 @@ func NewPortfolio() *Portfolio {
 	}
 }
 
-// AddInvestment ajoute un nouvel investissement au portefeuille
+// AddInvestment ajoute un nouvel investissement au portefeuille avec montant investi
 func (p *Portfolio) AddInvestment(name string, amount float64, referenceRate float64, investmentDate string) error {
 	if amount <= 0 {
 		return fmt.Errorf("le montant doit être positif")
@@ -46,6 +48,31 @@ func (p *Portfolio) AddInvestment(name string, amount float64, referenceRate flo
 		ReferenceRate:  referenceRate,
 		NAVHistory:     make([]NAV, 0),
 		InvestmentDate: investmentDate,
+	}
+
+	p.Investments[name] = inv
+	return nil
+}
+
+// AddInvestmentWithQuantity ajoute un nouvel investissement au portefeuille avec quantité et prix unitaire
+func (p *Portfolio) AddInvestmentWithQuantity(name string, quantity float64, unitPrice float64, referenceRate float64, investmentDate string) error {
+	if quantity <= 0 {
+		return fmt.Errorf("la quantité doit être positive")
+	}
+	if unitPrice <= 0 {
+		return fmt.Errorf("le prix unitaire doit être positif")
+	}
+
+	amountInvested := quantity * unitPrice
+
+	inv := &Investment{
+		Name:           name,
+		AmountInvested: amountInvested,
+		ReferenceRate:  referenceRate,
+		NAVHistory:     make([]NAV, 0),
+		InvestmentDate: investmentDate,
+		Quantity:       quantity,
+		UnitPrice:      unitPrice,
 	}
 
 	p.Investments[name] = inv
@@ -163,6 +190,13 @@ func (p *Portfolio) PrintPortfolioSummary() {
 	for name, inv := range p.Investments {
 		fmt.Printf("Investissement: %s\n", name)
 		fmt.Printf("  Montant investi: %.2f€\n", inv.AmountInvested)
+
+		// Afficher la quantité et le prix unitaire si disponibles
+		if inv.Quantity > 0 && inv.UnitPrice > 0 {
+			fmt.Printf("  Quantité: %.4f actions\n", inv.Quantity)
+			fmt.Printf("  Prix unitaire initial: %.2f€\n", inv.UnitPrice)
+		}
+
 		fmt.Printf("  Taux de référence: %.2f%%\n", inv.ReferenceRate)
 		fmt.Printf("  Date d'investissement: %s\n", inv.InvestmentDate)
 
@@ -186,9 +220,12 @@ func main() {
 	portfolio := NewPortfolio()
 
 	// Ajouter des investissements
+	// Méthode 1: Par montant investi
 	portfolio.AddInvestment("Action Tech", 5000, 8.0, "2024-01-01")
-	portfolio.AddInvestment("Obligation Corp", 3000, 4.5, "2024-01-01")
-	portfolio.AddInvestment("Fonds Immobilier", 4000, 6.0, "2024-01-01")
+
+	// Méthode 2: Par quantité et prix unitaire
+	portfolio.AddInvestmentWithQuantity("Obligation Corp", 100, 30.0, 4.5, "2024-01-01")
+	portfolio.AddInvestmentWithQuantity("Fonds Immobilier", 50, 80.0, 6.0, "2024-01-01")
 
 	// Ajouter les NAV historiques
 	// Action Tech
